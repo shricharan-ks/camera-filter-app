@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=()" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Campaign photo</title>
+    <link rel="stylesheet" href="styles.css?v=11" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="camera-app" data-camera="off" data-gallery-media="none">
+      <!-- ——— Desktop: classic web UI (wide screens) ——— -->
+      <header class="desktop-header">
+        <h1>Campaign photo</h1>
+        <p class="desktop-tagline">
+          Wide screens: live view is plain camera (mirrored). The result panel shows the composite with your overlay;
+          saved JPEGs match overlay size and use <strong>cover</strong> in the frame area. Use <strong>Record video</strong> for
+          framed <strong>MP4</strong> (H.264) when the browser supports it, otherwise WebM. Pick a video from <strong>Gallery</strong> and <strong>Export framed video</strong> the same way.
+        </p>
+        <p id="status-desktop" class="desktop-status" role="status"></p>
+      </header>
+
+      <main class="camera-main">
+        <div class="viewfinder-region">
+          <!-- Mobile-only top chrome -->
+          <header class="vf-chrome layout-mobile-only" aria-label="Camera tools">
+            <button type="button" data-action="stop" class="chrome-btn chrome-close" disabled aria-label="Close camera">
+              <span aria-hidden="true">×</span>
+            </button>
+            <p class="vf-status" id="status" role="status"></p>
+            <button type="button" data-action="save" class="chrome-btn chrome-save" disabled aria-label="Download JPEG">
+              <svg class="chrome-btn__svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+              </svg>
+            </button>
+          </header>
+
+          <div class="preview-panel">
+            <section class="preview-live" aria-label="Live camera">
+              <div class="video-wrap">
+                <div class="viewfinder-stack" id="viewStack">
+                  <video id="video" playsinline autoplay muted aria-label="Camera"></video>
+                  <img id="liveUploadPreview" class="live-upload-preview" alt="" hidden decoding="async" />
+                  <img
+                    id="liveFrameOverlay"
+                    class="live-frame-overlay"
+                    alt=""
+                    width="1080"
+                    height="1920"
+                    decoding="async"
+                  />
+                </div>
+                <span class="badge layout-mobile-only">Live</span>
+              </div>
+            </section>
+
+            <section class="preview-result" aria-label="Result">
+              <div class="canvas-wrap">
+                <canvas id="result" width="1080" height="1920" aria-label="Captured composite"></canvas>
+                <span class="badge badge-muted">Result</span>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- ——— Mobile-only bottom dock (iPhone-style) ——— -->
+        <nav class="bottom-dock layout-mobile-only" aria-label="Camera controls">
+          <div class="dock-when-off">
+            <button type="button" data-action="start" class="dock-open-cam">
+              <span class="dock-open-cam__icon" aria-hidden="true">◎</span>
+              Open camera
+            </button>
+          </div>
+
+          <div class="dock-capture-ui">
+            <div class="shutter-row">
+              <button
+                type="button"
+                data-action="upload"
+                class="side-hit side-hit--gallery"
+                aria-label="Pick a photo or video from your gallery"
+              >
+                <span class="side-hit-pill__stack">
+                  <svg class="side-hit__icon side-hit__icon--pill" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03-2.71L16 16l-2.71 2.03 1.03-3.07L19 12l-3.24-.03L13 9zm-6 8H4c-1.1 0-2-.9-2-2V2H2v14c0 1.1.9 2 2 2h14v-2H7z"
+                    />
+                  </svg>
+                  <span class="side-hit-pill__label">Gallery</span>
+                </span>
+              </button>
+
+              <button type="button" data-action="capture" class="shutter" disabled aria-label="Take photo">
+                <span class="shutter__ring"></span>
+                <span class="shutter__disc"></span>
+              </button>
+
+              <button type="button" data-action="switch" class="side-hit side-hit--flip" disabled aria-label="Flip to front or back camera">
+                <span class="side-hit-pill__stack">
+                  <svg class="side-hit__icon side-hit__icon--pill" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-5 11.5V13H9v3.5L5.5 12 9 8.5V12h6V8.5l3.5 3.5-3.5 3.5z"
+                    />
+                  </svg>
+                  <span class="side-hit-pill__label">Flip</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="dock-record-row">
+              <button
+                type="button"
+                data-action="record-toggle"
+                class="dock-record-btn"
+                disabled
+                aria-label="Record framed video"
+                aria-pressed="false"
+              >
+                Rec
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        <!-- ——— Desktop-only controls ——— -->
+        <section class="desktop-controls" aria-label="Controls">
+          <div class="row row-actions">
+            <button type="button" data-action="start" class="btn btn-primary">Start camera</button>
+            <button type="button" data-action="stop" class="btn" disabled>Stop</button>
+            <button type="button" data-action="switch" class="btn btn-switch" disabled title="Front / back camera">Switch camera</button>
+            <button type="button" data-action="capture" class="btn btn-accent" disabled>Take photo</button>
+            <button type="button" data-action="record-toggle" class="btn btn-record" disabled>Record video</button>
+          </div>
+
+          <p class="export-hint">
+            Use the camera or <strong>Gallery</strong> (photos or videos). <strong>Save photo</strong> for a JPEG;
+            <strong>Record video</strong> or <strong>Export framed video</strong> for MP4 when supported, else WebM.
+          </p>
+
+          <div class="row row-save">
+            <button type="button" data-action="upload" class="btn btn-secondary btn-gallery-desk" aria-label="Pick a photo or video from your gallery">
+              Gallery
+            </button>
+            <button
+              type="button"
+              data-action="export-video"
+              class="btn btn-secondary btn-export-video"
+              aria-describedby="desktopGalleryExportHint"
+              disabled
+            >
+              Export framed video
+            </button>
+            <button type="button" data-action="save" class="btn btn-save" disabled>Save photo</button>
+          </div>
+          <p
+            id="desktopGalleryExportHint"
+            class="desktop-gallery-export-hint"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="galleryResultDialog" class="gallery-result-dialog layout-mobile-only" aria-labelledby="galleryResultDialogTitle">
+      <div class="gallery-result-dialog__panel">
+        <header class="gallery-result-dialog__header">
+          <span class="gallery-result-dialog__header-spacer" aria-hidden="true"></span>
+          <h2 id="galleryResultDialogTitle" class="gallery-result-dialog__title">Preview</h2>
+          <button type="button" class="gallery-result-dialog__close" id="galleryResultDialogClose" aria-label="Close without saving">
+            ×
+          </button>
+        </header>
+        <div class="gallery-result-dialog__body">
+          <div class="gallery-result-dialog__frame">
+            <img id="galleryResultPreviewImg" class="gallery-result-dialog__img" alt="" />
+            <canvas
+              id="galleryResultPreviewCanvas"
+              class="gallery-result-dialog__preview-canvas"
+              aria-label="Framed video preview"
+              hidden
+            ></canvas>
+            <video
+              id="galleryResultPreviewVideo"
+              class="gallery-result-dialog__preview-video"
+              controls
+              playsinline
+              preload="auto"
+              aria-label="Framed video result"
+              hidden
+            ></video>
+          </div>
+        </div>
+        <footer class="gallery-result-dialog__footer">
+          <p
+            id="galleryVideoExportHint"
+            class="gallery-result-dialog__export-hint"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+          <div class="gallery-result-dialog__footer-actions">
+            <button
+              type="button"
+              class="gallery-result-dialog__export-video"
+              id="galleryResultDialogExportVideo"
+              aria-describedby="galleryVideoExportHint"
+              hidden
+            >
+              Download video
+            </button>
+            <button type="button" class="gallery-result-dialog__download" id="galleryResultDialogDownload">Download photo</button>
+          </div>
+        </footer>
+      </div>
+    </dialog>
+
+    <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics-compat.js"></script>
+    <script defer src="firebase-analytics-init.js"></script>
+    <script defer src="app.js?v=35"></script>
+  </body>
+</html>

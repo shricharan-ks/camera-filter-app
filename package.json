@@ -1,0 +1,12 @@
+{
+  "name": "camera-filter-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "deploy": "npx --yes firebase-tools@13 deploy --only hosting"
+  },
+  "dependencies": {
+    "selfsigned": "^2.4.1"
+  }
+}

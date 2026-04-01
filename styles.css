@@ -1,0 +1,1106 @@
+/* Breakpoint: below = iPhone-style camera; above = classic desktop layout */
+:root {
+  --layout-breakpoint: 900px;
+  --bg: #000000;
+  --surface: #181c26;
+  --border: #2a3142;
+  --text: #e8eaef;
+  --muted: #8b93a7;
+  --accent: #5eead4;
+  --accent-dim: #2dd4bf33;
+  --primary: #7c9cff;
+  --primary-solid: #3b82f6;
+  --danger: #f87171;
+  --radius: 12px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --preview-ratio: 1080 / 1920;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --touch-min: 48px;
+  --dock-bg: rgba(8, 10, 14, 0.88);
+  --chrome-bg: rgba(0, 0, 0, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* `#galleryInput` is created in app.js inside `#gallery-input-host` (display:none). */
+#gallery-input-host,
+#galleryInput {
+  display: none !important;
+}
+
+/* Mobile: gallery preview — fits viewport, no scroll, image letterboxed */
+.gallery-result-dialog {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100svh;
+  max-height: 100svh;
+  background: transparent;
+  overflow: hidden;
+  overscroll-behavior: none;
+  box-sizing: border-box;
+}
+
+.gallery-result-dialog[open] {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+@supports (height: 100dvh) {
+  .gallery-result-dialog {
+    height: min(100dvh, 100svh);
+    max-height: min(100dvh, 100svh);
+  }
+}
+
+.gallery-result-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.gallery-result-dialog__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: inherit;
+  min-height: 0;
+  width: 100%;
+  background: #0e1014;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.gallery-result-dialog__header {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
+  align-items: center;
+  padding: calc(10px + var(--safe-top)) 10px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 6px;
+}
+
+.gallery-result-dialog__header-spacer {
+  grid-column: 1;
+  width: 44px;
+  height: 1px;
+  visibility: hidden;
+}
+
+.gallery-result-dialog__title {
+  grid-column: 2;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.gallery-result-dialog__close {
+  grid-column: 3;
+  justify-self: end;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+
+.gallery-result-dialog__body {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  overflow: hidden;
+}
+
+.gallery-result-dialog__frame {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  /* Stack img / canvas / video in one cell so each stays centered (fixes video shifted / cropped on iOS). */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  place-content: center;
+  overflow: hidden;
+}
+
+/* Child rules used `display: block` — that overrides the HTML `hidden` attribute, so canvas + video both appeared (broken layout). */
+.gallery-result-dialog__frame > [hidden] {
+  display: none !important;
+}
+
+.gallery-result-dialog__frame > img,
+.gallery-result-dialog__frame > canvas,
+.gallery-result-dialog__frame > video {
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: center;
+  align-self: center;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.gallery-result-dialog__img {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gallery-result-dialog__preview-canvas {
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  background: #0a0c10;
+  object-fit: contain;
+}
+
+.gallery-result-dialog__preview-canvas:not([hidden]) {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(72vh, 72dvh, 100%);
+  height: auto;
+}
+
+.gallery-result-dialog__preview-video {
+  display: block;
+  min-width: 0;
+  /* Portrait clips: fit to frame width so the element + native controls stay inside the modal. */
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  background: #0a0c10;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.gallery-result-dialog__footer {
+  flex-shrink: 0;
+  padding: 12px 16px calc(12px + var(--safe-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0e1014;
+}
+
+.gallery-result-dialog__footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gallery-result-dialog__export-video {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.gallery-result-dialog__export-video:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gallery-result-dialog__export-video--primary:disabled {
+  opacity: 0.55;
+  filter: grayscale(0.15);
+}
+
+/* Subtle pulse while background encode runs */
+.gallery-result-dialog__export-video--waiting.gallery-result-dialog__export-video--primary:disabled {
+  animation: gallery-export-waiting-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes gallery-export-waiting-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 0 rgba(124, 156, 255, 0);
+  }
+  50% {
+    opacity: 0.68;
+    box-shadow: 0 0 0 3px rgba(124, 156, 255, 0.2);
+  }
+}
+
+.gallery-result-dialog__export-hint {
+  margin: 0 0 10px;
+  padding: 0 2px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+
+.gallery-result-dialog__export-hint:not([hidden]) {
+  display: block;
+}
+
+/* Gallery-video step: one primary CTA (same look as photo download). */
+.gallery-result-dialog__export-video--primary {
+  border: none;
+  background: var(--primary-solid);
+  color: #fff;
+  font-size: 1rem;
+  padding: 14px 16px;
+}
+
+.gallery-result-dialog__download {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: none;
+  background: var(--primary-solid);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+html {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  html {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+/* ——— Mobile base (portrait camera app) ——— */
+body {
+  margin: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-app {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.desktop-header,
+.desktop-controls {
+  display: none;
+}
+
+.camera-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.viewfinder-region {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  overscroll-behavior: none;
+}
+
+.vf-chrome {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: start;
+  gap: 6px;
+  padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) 10px calc(10px + var(--safe-left));
+  pointer-events: none;
+}
+
+.vf-chrome .chrome-save {
+  display: none;
+}
+
+.chrome-btn {
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--chrome-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.chrome-btn__svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.chrome-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.camera-app[data-camera="off"] .chrome-close {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.vf-status {
+  grid-column: 2;
+  margin: 0;
+  padding: 10px 6px 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  max-height: 4.2em;
+  overflow: hidden;
+}
+
+.vf-status.error {
+  color: #fecaca;
+}
+
+.preview-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.preview-result {
+  display: none;
+}
+
+.preview-live {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.video-wrap {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+}
+
+.viewfinder-stack {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+}
+
+.video-wrap #video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-wrap .live-upload-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.video-wrap .live-frame-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  z-index: 3;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(94, 234, 212, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+.badge-muted {
+  background: rgba(139, 147, 167, 0.15);
+  color: var(--muted);
+  border-color: rgba(139, 147, 167, 0.3);
+}
+
+.bottom-dock {
+  flex-shrink: 0;
+  padding: 12px 16px calc(14px + var(--safe-bottom));
+  background: var(--dock-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.camera-app[data-camera="off"] .dock-capture-ui {
+  display: none;
+}
+
+.camera-app[data-camera="on"] .dock-when-off {
+  display: none;
+}
+
+.dock-when-off {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.dock-open-cam {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: none;
+  background: var(--primary-solid);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dock-open-cam__icon {
+  font-size: 1.15rem;
+  opacity: 0.9;
+}
+
+.dock-capture-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dock-record-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.dock-record-btn {
+  width: 100%;
+  max-width: 220px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dock-record-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dock-record-btn.is-recording {
+  background: rgba(220, 38, 38, 0.35);
+  border-color: rgba(248, 113, 113, 0.65);
+  color: #fecaca;
+}
+
+.shutter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  max-width: 340px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 78px;
+  padding-right: 2px;
+}
+
+.side-hit {
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.side-hit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.side-hit--flip,
+.side-hit--gallery {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  min-width: 58px;
+  height: auto;
+  min-height: 64px;
+  padding: 10px 12px 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.side-hit--flip {
+  right: 0;
+}
+
+.side-hit--gallery {
+  left: 0;
+}
+
+.side-hit--flip:disabled {
+  opacity: 0.4;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.side-hit-pill__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.side-hit__icon {
+  width: 26px;
+  height: 26px;
+}
+
+.side-hit__icon--pill {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+.side-hit-pill__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.98);
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.shutter {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shutter:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shutter__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-sizing: border-box;
+}
+
+.shutter__disc {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.shutter:active:not(:disabled) .shutter__disc {
+  transform: scale(0.92);
+}
+
+/* ——— Desktop layout (classic web UI) ——— */
+@media (min-width: 900px) {
+  body {
+    background: radial-gradient(1200px 800px at 20% -10%, #1a2235 0%, transparent 55%),
+      radial-gradient(900px 600px at 100% 0%, #152028 0%, transparent 50%), #0f1218;
+    color: var(--text);
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+    line-height: 1.5;
+  }
+
+  .layout-mobile-only {
+    display: none !important;
+  }
+
+  .desktop-header,
+  .desktop-controls {
+    display: block;
+  }
+
+  .camera-app {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1.5vw, 0.65rem) clamp(0.75rem, 4vw, 2rem);
+    background: transparent;
+    overflow: hidden;
+  }
+
+  .desktop-header {
+    flex-shrink: 0;
+    margin-bottom: clamp(0.5rem, 2vw, 1rem);
+    overflow: hidden;
+  }
+
+  .desktop-header h1 {
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.5rem, 4vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .desktop-tagline {
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(0.8rem, 2.4vw, 0.9rem);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .desktop-status {
+    margin: 0.45rem 0 0;
+    font-size: max(13px, 0.8rem);
+    color: var(--muted);
+    min-height: 1.2em;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desktop-status.error {
+    color: var(--danger);
+  }
+
+  .camera-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 2vw, 1rem);
+    overflow: hidden;
+  }
+
+  .viewfinder-region {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .preview-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  .preview-panel > section {
+    min-width: 0;
+  }
+
+  .preview-result {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .preview-live {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Live column: show plain camera only; frame is applied in the result / on mobile. */
+  .preview-live .live-frame-overlay {
+    display: none !important;
+  }
+
+  /* Mirror horizontally so desktop preview matches a typical “selfie” orientation; capture stays unmirrored. */
+  .preview-live #video {
+    transform: scaleX(-1);
+    transform-origin: center center;
+  }
+
+  .video-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .viewfinder-stack {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  #result {
+    display: block;
+    margin: 0 auto;
+    /* Bitmap is 1080×1920 — override intrinsic CSS size so layout cannot exceed viewport */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: var(--preview-ratio);
+    object-fit: contain;
+    background: #0a0c10;
+    vertical-align: middle;
+  }
+
+  .desktop-controls {
+    flex-shrink: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(0.65rem, 2vw, 1rem) clamp(0.75rem, 3vw, 1.15rem);
+    box-shadow: var(--shadow);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .row-actions .btn-switch,
+  .row-actions .btn-accent,
+  .row-actions .btn-record {
+    grid-column: 1 / -1;
+  }
+
+  @media (min-width: 560px) {
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .row-actions .btn-switch,
+    .row-actions .btn-accent,
+    .row-actions .btn-record {
+      grid-column: auto;
+    }
+
+    .row-actions .btn {
+      flex: 1 1 auto;
+      min-width: min(100%, 6.5rem);
+    }
+  }
+
+  .row-save {
+    margin-bottom: 0;
+    gap: 0.5rem;
+  }
+
+  .btn-gallery-desk {
+    flex: 0 0 auto;
+    min-width: 7rem;
+  }
+
+  .export-hint {
+    margin: 0 0 0.5rem;
+    font-size: max(13px, 0.825rem);
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .desktop-gallery-export-hint {
+    margin: 0.4rem 0 0;
+    font-size: max(12px, 0.8rem);
+    color: var(--muted);
+    line-height: 1.4;
+    min-height: 1.4em;
+  }
+
+  .desktop-gallery-export-hint:not([hidden]) {
+    display: block;
+  }
+
+  .btn-export-video--waiting:disabled {
+    border-style: dashed;
+    border-color: rgba(139, 147, 167, 0.55);
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: max(16px, 0.9rem);
+    font-weight: 600;
+    padding: 0.65rem 0.85rem;
+    min-height: var(--touch-min);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+
+  .row-actions .btn {
+    width: 100%;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: #222833;
+    border-color: #3d465c;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    border-color: rgba(124, 156, 255, 0.45);
+    background: rgba(124, 156, 255, 0.12);
+    color: #b8c9ff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: rgba(124, 156, 255, 0.22);
+  }
+
+  .btn-accent {
+    border-color: rgba(94, 234, 212, 0.45);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .btn-switch {
+    border-color: rgba(139, 147, 167, 0.4);
+    color: var(--muted);
+  }
+
+  .btn-secondary {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--muted);
+  }
+
+  .btn-save {
+    flex: 1;
+    min-width: 160px;
+    border-color: rgba(94, 234, 212, 0.5);
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(124, 156, 255, 0.15));
+    color: #d1faf5;
+  }
+
+  .btn-record {
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(220, 38, 38, 0.12);
+    color: #fecaca;
+  }
+
+  .btn-record:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.22);
+    border-color: rgba(248, 113, 113, 0.55);
+  }
+
+  .btn-record.is-recording {
+    background: rgba(220, 38, 38, 0.35);
+    border-color: rgba(248, 113, 113, 0.7);
+    color: #fff;
+  }
+
+  .btn-export-video {
+    flex: 0 0 auto;
+    min-width: 9rem;
+  }
+}
